@@ -1,41 +1,24 @@
-# MySport-WEB
+# HKIF-Attendance
 
 #### Introduction
-Every university in Sweden has a sport board that organizes activities for students. Our application is intended to digitize and administrate paperwork for sport boards and activity leaders. 
+Every university in Sweden has a sport board that organizes activities for students. Our mission is to provide easy, fast and user-friendly system that maintains sport events.
 
 Being in scope of business happening in HKR Sport board we decided to help them optimize their job.
 
 #### Developers
 - Deniel Alekseev @M22
-- Kristijan Dakovic @kristijan00
-- Petros Daniel @Peter-Daniel-hkr
-- Robin Andersen @Gormsson
-- Stefan Vojtek @StephenCharlie
-
+- Matej Zabkar @matzab
 
 #### Technologies used
-- sendgrid/mail
-- axios
-- bcryptjs
-- compression
-- connect-flash
-- connect-mongodb-session
+- fingerprintJS
 - csurf
 - express
 - mongoose
-- csuuuidrf
-- exprequestress
 - helmet
 
 #### Challenges
-- Time management
-    - Time estimates(in Gantt chart)
+- Deadline management
 - Code related
-    - Different coding habits among team members
-    - New concepts
+    - New technologies
 - Teamwork
     - Organization
-    
-#### Learning outcomes    
-- Teamwork skills
-- Programming skills
