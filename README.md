@@ -9,30 +9,16 @@ Being in scope of business happening in HKR Sport board we decided to help them 
 - Deniel Alekseev @M22
 - Matej Zabkar @matzab
 
-
 #### Technologies used
-- sendgrid/mail
-- axios
-- bcryptjs
-- compression
-- connect-flash
-- connect-mongodb-session
+- fingerprintJS
 - csurf
 - express
 - mongoose
-- csuuuidrf
-- exprequestress
 - helmet
 
 #### Challenges
-- Time management
-    - Time estimates(in Gantt chart)
+- Deadline management
 - Code related
-    - Different coding habits among team members
-    - New concepts
+    - New technologies
 - Teamwork
     - Organization
-    
-#### Learning outcomes    
-- Teamwork skills
-- Programming skills
