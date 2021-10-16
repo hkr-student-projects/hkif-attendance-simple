@@ -1,6 +1,6 @@
 const express = require('express');
 var ObjectId = require('mongoose').Types.ObjectId;
-const Sport = require('../models/sport');
+const Sport = require('../models/whitelist');
 // const { validationResult } = require('express-validator');
 // const { courseValidators } = require('../utils/validators');
 

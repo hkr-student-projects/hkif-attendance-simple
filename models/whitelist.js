@@ -2,12 +2,10 @@ const { default: strictTransportSecurity } = require('helmet/dist/middlewares/st
 const { Schema, model } = require('mongoose');
 
 const whitelisted = new Schema({
-    devices: [
-        {
-            type: String,
-            required: true
-        }
-    ],
+    device: {
+        type: String,
+        required: true
+    },
     sports: [
         {
             type: String,
@@ -18,4 +16,4 @@ const whitelisted = new Schema({
     timestamps: true
 });
 
-module.exports = model('Leader', whitelisted);
+module.exports = model('Whitelist', whitelisted);
