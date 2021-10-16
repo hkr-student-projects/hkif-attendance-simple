@@ -7,10 +7,7 @@ Being in scope of business happening in HKR Sport board we decided to help them 
 
 #### Developers
 - Deniel Alekseev @M22
-- Kristijan Dakovic @kristijan00
-- Petros Daniel @Peter-Daniel-hkr
-- Robin Andersen @Gormsson
-- Stefan Vojtek @StephenCharlie
+- Matej Zabkar @matzab
 
 
 #### Technologies used
