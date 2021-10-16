@@ -1,4 +1,4 @@
-# MySport-WEB
+# HKIF-Attendance
 
 #### Introduction
 Every university in Sweden has a sport board that organizes activities for students. Our application is intended to digitize and administrate paperwork for sport boards and activity leaders. 
