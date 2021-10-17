@@ -2,12 +2,10 @@ const { default: strictTransportSecurity } = require('helmet/dist/middlewares/st
 const { Schema, model } = require('mongoose');
 
 const user = new Schema({
-    devices: [
-        {
-            type: String,
-            required: true
-        }
-    ],
+    device: {
+        type: String,
+        required: true  
+    },
     firstname: {
         type: String,
         required: false

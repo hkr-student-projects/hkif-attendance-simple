@@ -8,12 +8,12 @@ const getVisitorId = async function() {
     console.log(visitorId);
 
     document.querySelector('.visitorId').textContent = "Visitor ID: " + visitorId;
-    verifyUser(visitorId, 3000);
+    enroll(visitorId, 3000);
 
     return visitorId;
 };
 
-const verifyUser = async function(visitorId, port) {
+const enroll = async function(visitorId, port) {
     var HttpClient = function() {
         this.get = function(aUrl, aCallback, json) {
             const anHttpRequest = new XMLHttpRequest();
@@ -31,7 +31,7 @@ const verifyUser = async function(visitorId, port) {
     
 
     var client = new HttpClient();
-        client.get(`http://192.168.1.195:${port}/verify`, 
+        client.get(`http://192.168.1.195:${port}/participate/enroll`, 
         function(response) {
             console.log("response: " + response);
         }, 
