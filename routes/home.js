@@ -25,13 +25,16 @@ router.get('/', async (req, res) => {
 router.get('/whitelist/:id', async (req, res) => {
 
     const visitorId = req.params.id;
+    console.log("Whitelist ID: " + visitorId);
     const result = await isWhitelisted(visitorId);
 
     if(!result.flag) {
         await addDevice(visitorId);
+        console.log("You have been whitelisted!");
         res.status(200).send("You have been whitelisted!");
     }
     else {
+        console.log("You are already in a system!");
         res.status(302).send("You are already in a system!");
     }
 });
@@ -40,11 +43,11 @@ module.exports = router;
 
 async function isWhitelisted(visitorId) {
     var filter = { 
-        $device: visitorId
+        device: visitorId
     };
     const obj = await Whitelist.findOne(filter);
 
-    console.log(obj);
+    console.log("Visitor: " + visitorId + " \nresult: " + obj);
 
     return {
         flag: obj != null,
