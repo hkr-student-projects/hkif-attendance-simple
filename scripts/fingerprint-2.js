@@ -1,6 +1,6 @@
 const FingerprintJS = require('/node_modules/@fingerprintjs/fingerprintjs');
 
-const getVisitorId = async function() {
+const getVisitorIdEnroll = async function() {
     const fpPromise = FingerprintJS.load();
     const fp = await fpPromise;
     const result = await fp.get();
@@ -46,4 +46,4 @@ const enroll = async function(visitorId, port) {
     // });
 };
 
-getVisitorId();
+getVisitorIdEnroll();

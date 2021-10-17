@@ -1,7 +1,10 @@
 const express = require('express');
 const router = express.Router();
+const qrcode = require('qrcode');
+const crypto = require('crypto');
 const Whitelist = require('../models/whitelist');
 const User = require('../models/user');
+const Token = require('../models/token');
 
 router.get('/', async (req, res) => {
 
@@ -52,13 +55,26 @@ router.post('/verify', async (req, res) => {
         res.status(500).send("You are not in the system!");
     }
     else {
-        console.log("You are already in a system!");
-        res.status(200).send("You are already in a system!");
+
+        await generateQR().then((response) => {
+            console.log("You are already in a system!");
+            res
+                .status(200)
+                .send(response); 
+        });
+
+        
+        //res.status(200).send("You are already in a system!");
     }
 });
 
+
+
 router.get('/participate/:token', async (req, res) => {
-    res.render('finger-printing', {
+    console.log("Client has been Redirected from QR Code link.")
+    res
+    .status(200)
+    .render('finger-printing', {
         layout: 'empty',
         title: 'Fingerprinting Page'
     }); 
@@ -73,6 +89,26 @@ router.get('/participate/enroll', async (req, res) => {
 });
 
 module.exports = router;
+
+
+async function generateQR() {
+
+    var token = null;
+
+    crypto.randomBytes(24, async (err, buffer) => {
+        const t = buffer.toString('hex');
+        await addToken(t);
+        token = t;
+    });
+
+    const qr_image = await qrcode.toDataURL(`http://192.168.1.195:3000/participate/${token}`);
+
+    return new Promise(function(resolve, reject) {
+        resolve(
+            qr_image
+        );
+    });
+}
 
 async function isWhitelisted(visitorId) {
     var filter = { 
@@ -91,6 +127,12 @@ async function isWhitelisted(visitorId) {
 async function addDevice(visitorId) {
     await new Whitelist({
         device: visitorId
+    }).save();
+}
+
+async function addToken(token) {
+    await new Token({
+        value: token
     }).save();
 }
 

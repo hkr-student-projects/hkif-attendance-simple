@@ -34,6 +34,7 @@ const verifyUser = async function(visitorId, port) {
         client.get(`http://192.168.1.195:${port}/verify`, 
         function(response) {
             console.log("response: " + response);
+            document.getElementById("qr-code").src=`${response}`;
         }, 
         { 
             visitorId 

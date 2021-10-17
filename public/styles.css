@@ -61,6 +61,30 @@
     text-align: center;
 }
 
+@media all and (max-width: 600px) and (orientation:portrait) 
+{
+    #qr-code {
+        min-width: 80%;
+        min-height: 80%;
+    }
+}
+
+@media all and (orientation:landscape) 
+{
+    #qr-code {
+        min-width: 50%;
+        min-height: 50%;
+    }
+}
+
+.qr-container {
+    width: 100%;
+}
+
+.qr-container .centrer {
+    margin: 0 auto;
+}
+
 .visually-hidden {
     position: absolute;
     width: 1px;
