@@ -1,7 +1,7 @@
 const { default: strictTransportSecurity } = require('helmet/dist/middlewares/strict-transport-security');
 const { Schema, model } = require('mongoose');
 
-const user = new Schema({
+const person = new Schema({
     device: {
         type: String,
         required: true  
@@ -50,12 +50,14 @@ const user = new Schema({
     ],
     attendance: [
         {
-            type: Date,
-            required: false
+            date: {
+                type: Date,
+                required: false
+            }
         }
     ]
 }, {
     timestamps: true
 });
 
-module.exports = model('User', user);
+module.exports = model('Person', person);

@@ -3,15 +3,12 @@ const router = express.Router();
 const qrcode = require('qrcode');
 const crypto = require('crypto');
 const Whitelist = require('../models/whitelist');
-const User = require('../models/user');
+const Person = require('../models/person');
 const Token = require('../models/token');
 const path = require('path');
-// const SSEChannel = require('sse-pubsub');
-// const channel = new SSEChannel({
-    
-// });
 const SSEChannel = require('../helpers/sse.js');
 const channel = new SSEChannel();
+const moment = require('moment-timezone');
 
 router.get('/', async (req, res) => {
 
@@ -42,7 +39,9 @@ router.get('/test', async (req, res) => {
 
 router.get('/stream', async (req, res) => { 
     channel.subscribe(req, res);
-    console.log('Subscribed client to server updates');
+    if(channel.printLog) {
+        console.log('Subscribed client to server updates');
+    }
     //channel.subscribe(req, res); 
     // const { visitorId } = req.body;
     // const result = await isWhitelisted(visitorId);
@@ -57,8 +56,7 @@ router.get('/stream', async (req, res) => {
     // }  
 });
 
-router.get('/whitelist', async (req, res) => {
-
+router.get('/whitelist/:token', async (req, res) => {
     const { visitorId } = req.body;
     console.log("ID to whitelist : " + visitorId);
     const result = await isWhitelisted(visitorId);
@@ -98,26 +96,54 @@ router.post('/verify', async (req, res) => {
 
 
 router.get('/participate/:token', async (req, res) => {
-    console.log("Client has scanned the QR code");
+    const token = req.params.token;
+    console.log("Token to check: " + token);
+    const result = await checkToken(token);
+
+    if(!result.flag) {
+        res
+            .status(404)
+            .send("No such token exists: " + token);
+
+        return;    
+    }
+
 
     res
-    .type('html')
-    .render('finger-printing', {
-        title: 'finger-printing.hbs',
-        layout: 'empty'
-    }); 
-    // .sendFile(path.resolve('views/test.html'));
+        .type('html')
+        .render('finger-printing', {
+            title: 'Fingerprint capture',
+            token,
+            layout: 'empty'
+        });
 });
 
 router.post('/register/enroll', async (req, res) => {
-    const { visitorId } = req.body;
+    const { visitorId, token } = req.body;
+    const token_result = await checkToken(token);
 
-    console.log("Participant is enrolled, ID: " + visitorId);
+    if(!token_result.flag) {
+        res
+            .status(404)
+            .send("No such token exists: " + token);
 
+        return;    
+    }
+
+    await removeTokenDB(token);
     await updateLeaderQR();
-    //const result = await addParticipant(visitorId);
-
-    res.status(200).send("You have been added to the sport event! Your ID: " + visitorId); 
+    await addParticipant(visitorId).then((result) => {
+        if(result) {
+            console.log("Participant is enrolled, ID: " + visitorId);
+            res.status(200).send("You have been added to the sport event! Your ID: " + visitorId); 
+        }
+        else {
+            console.log("Participant tried to sign up again!");
+            res.status(404).send("[Error]: You are already enrolled for this sport! Your ID: " + visitorId); 
+        }
+    }).catch((err) => {
+        
+    });
 });
 
 async function updateLeaderQR() {
@@ -130,17 +156,10 @@ async function updateLeaderQR() {
 async function generateQR() {
     console.log('Generating QR code');
     const token = crypto.randomBytes(16).toString('hex');
-    //await addToken(token);
-
-    // const random = (length = 8) => {
-    //     return Math.random().toString(16).substr(2, length);
-    // };
-
-    //const token = random(14);
+    await addTokenDB(token);
 
     const qr_image = await qrcode.toDataURL(`http://192.168.1.195:3000/participate/${token}`);
-    //const qr_image = await qrcode.toDataURL(`http://192.168.1.195:3000/test`);
-    console.log(`http://192.168.1.195:3000/participate/${token}`);
+    //console.log(`http://192.168.1.195:3000/participate/${token}`);
 
     return new Promise(function(resolve, reject) {
         resolve(
@@ -152,8 +171,38 @@ async function generateQR() {
     });
 }
 
-async function checkToken(token) {
+async function addTokenDB(token) {
+    await new Token({
+        value: token
+    }).save();
+}
 
+async function checkToken(token) {
+    var filter = { 
+        value: token
+    };
+    const obj = await Token.findOne(filter);
+
+    console.log("checkToken: " + token + " \nresult: " + obj);
+
+    return {
+        flag: obj != null,
+        obj
+    };
+}
+
+async function removeTokenDB(token) {
+    var filter = { 
+        value: token
+    };
+    const obj = await Token.deleteOne(filter);
+
+    console.log("removeTokenDB: " + token + " \nresult: " + obj);
+
+    return {
+        flag: obj != null,
+        obj
+    };
 }
 
 async function isWhitelisted(visitorId) {
@@ -176,32 +225,60 @@ async function addDevice(visitorId) {
     }).save();
 }
 
-async function addToken(token) {
-    await new Token({
-        value: token
-    }).save();
-}
-
 async function addParticipant(visitorId) {
 
-    var filter = { 
+    const filter = { 
         device: visitorId
     };
-    const result = await User.findOne(filter);
+    const person = await Person.findOne(filter);
 
-    if(result == null) {
-        await new User({
+    if(person == null) {
+        await new Person({
             device: visitorId,
         }).save();
-        //ask name here
+        const dateSweden = moment.tz(Date.now(), "Europe/Stockholm");
+        var update = { 
+            $push: { 'attendance': { "date": dateSweden } } 
+        };    
+        const result2 = await Person.updateOne(filter, update);
+
+        return new Promise(function(resolve, reject) {
+            resolve(true);
+        });
     }
-    console.log("Found user: " + result);
-    var update = { $push: { 'attendance': Date.now() } };    
-    const result2 = await User.updateOne(filter, update);
+    //console.log("Found user: " + result);
 
-    console.log("Updated user: " + result2);
+    const dateSweden = moment.tz(Date.now(), "Europe/Stockholm");
+    var check = moment(dateSweden, 'YYYY/MM/DD');
+    var month = check.format('M');
+    var day = check.format('D');
+    var year = check.format('YYYY');
+    //TOO HARD COULD NOT FIGURE OUT HOW TO QUERY ARRAY OF DATES, sorry...
+    //console.log("Month: " + month + " Day: " + day + " Year: " + year);// Today is 21 Nov 2021, output shows: Month: 11 Day: 21 Year: 2021
+    //console.log("His attendance: " + person.attendance);
+    // const filter2 = { 
+    //     $and: [
+    //         { 'device': visitorId },
+    //         { 'attendance': { "$eq": [{ "$year": "$date" }, year] } }
+    //     ]
+    // };
+    const date_list = person.attendance;
+    let flag = true;
+    date_list.forEach(d => {
+        let check1 = moment(d.date, 'YYYY/MM/DD');
+        let m = check1.format('M');
+        let dd = check1.format('D');
+        let y = check1.format('YYYY');
 
-    return result2;
+        if(y == year && m == month && dd == day) {
+            console.log('Already signed up!');
+            flag = false;
+        }
+    });
+    console.log('Flag value: ' + flag);
+    return new Promise(function(resolve, reject) {
+        resolve(flag);
+    });
 }
 
 module.exports = router;

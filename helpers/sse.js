@@ -12,14 +12,15 @@ module.exports = class SSEChannel {
 			clientRetryInterval: 1000,
 			startId: 1,
 			historySize: 100,
-			rewind: 0
+			rewind: 0,
+			printLog: false
 		}, options);
 
 		this.nextID = this.options.startId;
 		this.clients = new Set();
 		this.messages = [];
 		this.active = true;
-		this.isPinging = false;
+		this.printLog = this.options.printLog;
 
 		if (this.options.pingInterval) {
 			this.pingTimer = setInterval(() => this.publish(), this.options.pingInterval);
@@ -49,7 +50,10 @@ module.exports = class SSEChannel {
 			this.messages.push({ id, eventName, output });
 		}
 
-		console.log('Clients size: ' + this.clients.size);
+		if(this.printLog) {
+			console.log('Clients size: ' + this.clients.size);
+		}
+
 		[...this.clients]
         //.filter(c => !eventName || hasEventMatch(c.events, eventName))
         .forEach(c => { 
@@ -117,7 +121,7 @@ module.exports = class SSEChannel {
 		this.clients.forEach(c => c.res.end());
 		this.clients = new Set();
 		this.messages = [];
-		if (this.pingTimer) clearInterval(this.pingTimer);
+		if (this.pingTimer) { clearInterval(this.pingTimer); } 
 		this.active = false;
 	}
 

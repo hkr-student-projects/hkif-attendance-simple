@@ -8,12 +8,12 @@ const file0 = 'test-get-unique-id.js';
 module.exports = {
     mode: 'development',
     entry: [
-        path.resolve(__dirname, './scripts/', file1),
+        path.resolve(__dirname, './scripts/', file2),
         //path.resolve(__dirname, './scripts/', file2)
     ],
     devtool: "source-map",
     output: {
         path: __dirname,
-        filename: `./public/bundle-${file1}`
+        filename: `./public/bundle-${file2}`
     }
 };

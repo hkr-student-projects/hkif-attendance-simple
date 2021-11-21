@@ -7,13 +7,13 @@ const getVisitorIdEnroll = async function() {
     const visitorId = result.visitorId;
     console.log(visitorId);
 
-    
     enroll(visitorId, 3000);
 
     //return visitorId;
 };
 
 const enroll = function(visitorId, port) {
+    const token = getToken();
     var HttpClient = function() {
         this.post = function(aUrl, aCallback, json) {
             const anHttpRequest = new XMLHttpRequest();
@@ -39,7 +39,8 @@ const enroll = function(visitorId, port) {
             console.log("response: " + response);
         }, 
         { 
-            "visitorId": visitorId 
+            "visitorId": visitorId,
+            "token": token
         }
     );
 
@@ -47,6 +48,10 @@ const enroll = function(visitorId, port) {
     // return new Promise((resolve, reject) => {
     //     resolve({'country' : 'INDIA'});
     // });
+};
+
+const getToken = function() {
+    return document.getElementById('super-secret-token').value;
 };
 
 getVisitorIdEnroll();

@@ -13,15 +13,12 @@ const sport = new Schema({
         type: Date,
         require: true
     },
-    participants: {
-        list: [
-            {
-                type: Schema.Types.ObjectId,
-                ref: 'User',
-                required: false
-            }
-        ]
-    }
+    participants: [
+        {
+            type: String,
+            required: false
+        }
+    ]
 }, { timestamps: true });
 
 sport.method('toClient', function() {
