@@ -1,6 +1,6 @@
 const express = require('express');
 //const csurf = require('csurf');
-//const helmet = require('helmet');
+const helmet = require('helmet');
 //const flash = require('connect-flash');
 const session = require('express-session');
 const compression = require('compression');
@@ -9,6 +9,8 @@ const path = require('path');
 const MongoClient = require('mongodb').MongoClient;
 const mongoose = require('mongoose');
 const MongoStore = require('connect-mongodb-session')(session);
+const cors = require('cors');
+//const socketServer =  require('./routes/socket-server.js');
 
 const homeRoute = require('./routes/home');
 const sportsRoute = require('./routes/sports');
@@ -34,6 +36,7 @@ app.engine('hbs', hbs.engine);
 app.set('view engine', 'hbs');
 app.set('views', 'views');
 
+app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.urlencoded({ extended: true }));
 app.use(session({

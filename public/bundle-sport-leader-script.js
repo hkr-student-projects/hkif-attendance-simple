@@ -2885,33 +2885,37 @@ function __classPrivateFieldSet(receiver, state, value, kind, f) {
 var __webpack_exports__ = {};
 // This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
 (() => {
-/*!**********************************!*\
-  !*** ./scripts/fingerprint-2.js ***!
-  \**********************************/
+/*!****************************************!*\
+  !*** ./scripts/sport-leader-script.js ***!
+  \****************************************/
 const FingerprintJS = __webpack_require__(/*! ../../../../../node_modules/@fingerprintjs/fingerprintjs */ "./node_modules/@fingerprintjs/fingerprintjs/dist/fp.esm.js");
 
-const getVisitorIdEnroll = async function() {
+const getVisitorId = async function(port) {
     const fpPromise = FingerprintJS.load();
     const fp = await fpPromise;
     const result = await fp.get();
     const visitorId = result.visitorId;
     console.log(visitorId);
 
-    document.querySelector('.visitorId').textContent = "Visitor ID: " + visitorId;
-    enroll(visitorId, 3000);
-
-    return visitorId;
+    const node = document.querySelector('.visitorId');
+    if(node) {
+        document.querySelector('.visitorId').textContent = "Visitor ID: " + visitorId;
+        verifyUser(visitorId, port);
+    }
 };
 
-const enroll = async function(visitorId, port) {
+const verifyUser = function(visitorId, port) {
     var HttpClient = function() {
-        this.get = function(aUrl, aCallback, json) {
+        this.post = function(aUrl, aCallback, json) {
             const anHttpRequest = new XMLHttpRequest();
-            anHttpRequest.onreadystatechange = function() { 
-                if (anHttpRequest.readyState == 4 && anHttpRequest.status == 200) {
-                    aCallback(anHttpRequest.responseText);
-                } 
-            };
+            // anHttpRequest.onreadystatechange = function() { 
+            //     if (anHttpRequest.readyState == 4 && anHttpRequest.status == 200) {
+            //         aCallback(anHttpRequest.responseText);
+            //     } 
+            // };
+            anHttpRequest.addEventListener('load', function() {
+                aCallback(anHttpRequest.responseText);
+            });
             anHttpRequest.open("POST", aUrl, true);  
             anHttpRequest.setRequestHeader("Content-Type", "application/json;charset=UTF-8"); 
             anHttpRequest.send(JSON.stringify(json));
@@ -2921,12 +2925,14 @@ const enroll = async function(visitorId, port) {
     
 
     var client = new HttpClient();
-        client.get(`http://192.168.1.195:${port}/participate/enroll`, 
+        client.post(`http://192.168.1.195:${port}/verify`, 
         function(response) {
             console.log("response: " + response);
+            const res = JSON.parse(response);
+            document.getElementById("qr-code").src=`${res.qr_image}`;
         }, 
         { 
-            visitorId 
+            "visitorId": visitorId
         }
     );
 
@@ -2936,9 +2942,18 @@ const enroll = async function(visitorId, port) {
     // });
 };
 
-getVisitorIdEnroll();
+const subscribe = function(port) {
+    const es = new EventSource(`http://192.168.1.195:${port}/stream`);
+    es.addEventListener('event-updated-qr-code', ev => {
+        //alert(ev.data);
+        document.getElementById("qr-code").src=`${ev.data}`;
+    });
+};
+
+getVisitorId(3000);
+subscribe(3000);
 })();
 
 /******/ })()
 ;
-//# sourceMappingURL=bundle-fingerprint-2.js.map
+//# sourceMappingURL=bundle-sport-leader-script.js.map

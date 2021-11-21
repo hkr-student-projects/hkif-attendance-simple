@@ -2883,11 +2883,11 @@ function __classPrivateFieldSet(receiver, state, value, kind, f) {
 /******/ 	
 /************************************************************************/
 var __webpack_exports__ = {};
-// This entry need to be wrapped in an IIFE because it need to be isolated against other entry modules.
+// This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
 (() => {
-/*!********************************!*\
-  !*** ./scripts/home-script.js ***!
-  \********************************/
+/*!***************************************!*\
+  !*** ./scripts/test-get-unique-id.js ***!
+  \***************************************/
 const FingerprintJS = __webpack_require__(/*! ../../../../../node_modules/@fingerprintjs/fingerprintjs */ "./node_modules/@fingerprintjs/fingerprintjs/dist/fp.esm.js");
 
 const getVisitorId = async function() {
@@ -2900,112 +2900,12 @@ const getVisitorId = async function() {
     const node = document.querySelector('.visitorId');
     if(node) {
         document.querySelector('.visitorId').textContent = "Visitor ID: " + visitorId;
-        verifyUser(visitorId, 3000);
     }
-};
-
-const verifyUser = function(visitorId, port) {
-    var HttpClient = function() {
-        this.post = function(aUrl, aCallback, json) {
-            const anHttpRequest = new XMLHttpRequest();
-            // anHttpRequest.onreadystatechange = function() { 
-            //     if (anHttpRequest.readyState == 4 && anHttpRequest.status == 200) {
-            //         aCallback(anHttpRequest.responseText);
-            //     } 
-            // };
-            anHttpRequest.addEventListener('load', function() {
-                aCallback(anHttpRequest.responseText);
-            });
-            anHttpRequest.open("POST", aUrl, true);  
-            anHttpRequest.setRequestHeader("Content-Type", "application/json;charset=UTF-8"); 
-            anHttpRequest.send(JSON.stringify(json));
-            console.log("sent: " + JSON.stringify(json));
-        };
-    };
-    
-
-    var client = new HttpClient();
-        client.post(`http://192.168.1.195:${port}/verify`, 
-        function(response) {
-            console.log("response: " + response);
-            const res = JSON.parse(response);
-            document.getElementById("qr-code").src=`${res.qr_image}`;
-        }, 
-        { 
-            "visitorId": visitorId
-        }
-    );
-
-
-    // return new Promise((resolve, reject) => {
-    //     resolve({'country' : 'INDIA'});
-    // });
 };
 
 getVisitorId();
 })();
 
-// This entry need to be wrapped in an IIFE because it need to be isolated against other entry modules.
-(() => {
-/*!***************************************!*\
-  !*** ./scripts/participate-script.js ***!
-  \***************************************/
-const FingerprintJS = __webpack_require__(/*! ../../../../../node_modules/@fingerprintjs/fingerprintjs */ "./node_modules/@fingerprintjs/fingerprintjs/dist/fp.esm.js");
-
-const getVisitorIdEnroll = async function() {
-    const fpPromise = FingerprintJS.load();
-    const fp = await fpPromise;
-    const result = await fp.get();
-    const visitorId = result.visitorId;
-    console.log(visitorId);
-
-    
-    enroll(visitorId, 3000);
-
-    //return visitorId;
-};
-
-const enroll = function(visitorId, port) {
-    var HttpClient = function() {
-        this.post = function(aUrl, aCallback, json) {
-            const anHttpRequest = new XMLHttpRequest();
-            // anHttpRequest.onreadystatechange = function() { 
-            //     if (anHttpRequest.readyState == 4 && anHttpRequest.status == 200) {
-            //         aCallback(anHttpRequest.responseText);
-            //     } 
-            // };
-            anHttpRequest.addEventListener('load', function() {
-                aCallback(anHttpRequest.responseText);
-            });
-            anHttpRequest.open("POST", aUrl, true);  
-            anHttpRequest.setRequestHeader("Content-Type", "application/json;charset=UTF-8"); 
-            console.log("sent: " + JSON.stringify(json));
-            anHttpRequest.send(JSON.stringify(json));
-        };
-    };
-    
-
-    var client = new HttpClient();
-        client.post(`http://192.168.1.195:${port}/register/enroll`, 
-        function(response) {
-            console.log("response: " + response);
-        }, 
-        { 
-            "visitorId": visitorId 
-        }
-    );
-
-
-    // return new Promise((resolve, reject) => {
-    //     resolve({'country' : 'INDIA'});
-    // });
-};
-
-getVisitorIdEnroll();
-// const btn = document.querySelector('.enroll');
-// btn.addEventListener('click', getVisitorIdEnroll);
-})();
-
 /******/ })()
 ;
-//# sourceMappingURL=bundle-fingerprint.js.map
+//# sourceMappingURL=bundle-test-get-unique-id.js.map
