@@ -11,7 +11,6 @@ const mongoose = require('mongoose');
 const MongoStore = require('connect-mongodb-session')(session);
 const cors = require('cors');
 const permissionsPolicy = require("permissions-policy");
-//const socketServer =  require('./routes/socket-server.js');
 
 const homeRoute = require('./routes/home');
 const sportsRoute = require('./routes/sports');
@@ -50,6 +49,7 @@ app.use(session({
 }));
 ////app.use(csurf());
 //app.use(flash());
+//https://npm.io/package/permissions-policy
 app.use(
     permissionsPolicy({
       features: {
