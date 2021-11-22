@@ -11,19 +11,6 @@ const channel = new SSEChannel();
 const moment = require('moment-timezone');
 
 router.get('/', async (req, res) => {
-
-    // const { visitorId } = req.body;
-    // const result = await isWhitelisted(visitorId);
-
-    // if(!result.flag) {
-    //     console.log("Connected user is NOT whitelisted");
-    // }
-    // else {
-    //     console.log("Connected user IS Whitelisted!");
-    // }
-
-    // res
-    // .status(result.flag ? 200 : 401)
     res.render('index', {
         title: 'Home',
         isHome: true
@@ -57,19 +44,60 @@ router.get('/stream', async (req, res) => {
 });
 
 router.get('/whitelist/:token', async (req, res) => {
-    const { visitorId } = req.body;
-    console.log("ID to whitelist : " + visitorId);
-    const result = await isWhitelisted(visitorId);
+    const token = req.params.token;
+    console.log("Token to check os whitelisted: " + token);
+    const result = await checkToken(token);
 
     if(!result.flag) {
-        await addDevice(visitorId);
-        console.log("You have been whitelisted!");
-        res.status(200).send("You have been whitelisted!");
+        res
+            .status(400)
+            .send("No such token exists: " + token);
+        return;    
     }
-    else {
-        console.log("You are already in a system!");
-        res.status(400).send("You are already in a system!");
+
+    res.render('whitelist-client', {
+        title: 'Whitelist',
+        layout: 'empty-test',
+        token
+    }); 
+
+    // whiteListDevice
+
+    // if(!result.flag) {
+    //     await addDevice(visitorId);
+    //     console.log("You have been whitelisted!");
+    //     res.status(200).send("You have been whitelisted!");
+    // }
+    // else {
+    //     console.log("You are already in a system!");
+    //     res.status(400).send("You are already in a system!");
+    // }
+});
+
+router.post('/whitelist', async (req, res) => {
+    const { visitorId, token } = req.body;
+
+    if(visitorId == null || token == null) {
+        res
+            .status(400)
+            .send("No body supplied!");
+        return;    
     }
+
+    const result = await checkToken(token);
+    if(!result.flag) {
+        res
+            .status(400)
+            .send("No such token exists: " + token);
+        return;    
+    }
+
+    await removeTokenDB(token);
+    await addWhitelist(visitorId);
+
+    res
+        .status(200)
+        .send("You have been whitelisted as sport leader or board member.");
 });
 
 router.post('/verify', async (req, res) => {
@@ -108,7 +136,6 @@ router.get('/participate/:token', async (req, res) => {
         return;    
     }
 
-
     res
         .type('html')
         .render('finger-printing', {
@@ -146,6 +173,7 @@ router.post('/register/enroll', async (req, res) => {
     });
 });
 
+
 async function updateLeaderQR() {
     await generateQR().then((response) => {
         console.log("Generated new QR for Leader");
@@ -169,6 +197,14 @@ async function generateQR() {
             }
         );
     });
+}
+
+async function generateToken() {
+    console.log('Generating token');
+    const token = crypto.randomBytes(16).toString('hex');
+    await addTokenDB(token);
+
+    return token;
 }
 
 async function addTokenDB(token) {
@@ -219,7 +255,7 @@ async function isWhitelisted(visitorId) {
     };
 }
 
-async function addDevice(visitorId) {
+async function addWhitelist(visitorId) {
     await new Whitelist({
         device: visitorId
     }).save();
