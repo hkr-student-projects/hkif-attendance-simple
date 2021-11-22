@@ -16,6 +16,9 @@ const homeRoute = require('./routes/home');
 const sportsRoute = require('./routes/sports');
 const errorMiddleware = require('./middleware/error');
 const config = require('./keys/config');
+const timetable = require('./public/timetable');
+
+timetable.getSportNow();
 
 const app = express();
 const store = MongoStore({
