@@ -13,21 +13,15 @@ const sport = new Schema({
         type: Date,
         require: true
     },
-    participants: [
-        {
-            type: String,
-            required: false
-        }
-    ]
+    participants: {
+        list: [
+            {
+                type: String,
+                required: false
+            }
+        ]
+    }
 }, { timestamps: true });
 
-sport.method('toClient', function() {
-    const sport = this.toObject();
-    
-    sport.id = sport._id;
-    delete sport._id;
-
-    return sport;
-});
 
 module.exports = model('Sport', sport);

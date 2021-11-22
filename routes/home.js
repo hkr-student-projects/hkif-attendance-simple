@@ -5,6 +5,7 @@ const crypto = require('crypto');
 const Whitelist = require('../models/whitelist');
 const Person = require('../models/person');
 const Token = require('../models/token');
+const Sport = require('../models/sport');
 const path = require('path');
 const SSEChannel = require('../helpers/sse.js');
 const channel = new SSEChannel();
@@ -24,11 +25,21 @@ router.get('/test', async (req, res) => {
     }); 
 });
 
-router.get('/stream', async (req, res) => { 
-    channel.subscribe(req, res);
-    if(channel.printLog) {
-        console.log('Subscribed client to server updates');
+router.get('/stream/:vid', async (req, res) => { 
+    const result = await isWhitelisted(req.params.vid);
+
+    if(!result.flag) {
+        res
+            .status(400)
+            .send("You are not whitelisted.");
+        return;    
     }
+
+    channel.subscribe(req, res);
+    console.log('Subscribed client to server updates');
+    // if(channel.printLog) {
+    //     console.log('Subscribed client to server updates');
+    // }
     //channel.subscribe(req, res); 
     // const { visitorId } = req.body;
     // const result = await isWhitelisted(visitorId);
@@ -219,7 +230,7 @@ async function checkToken(token) {
     };
     const obj = await Token.findOne(filter);
 
-    console.log("checkToken: " + token + " \nresult: " + obj);
+    //console.log("checkToken: " + token + " \nresult: " + obj);
 
     return {
         flag: obj != null,
@@ -233,7 +244,7 @@ async function removeTokenDB(token) {
     };
     const obj = await Token.deleteOne(filter);
 
-    console.log("removeTokenDB: " + token + " \nresult: " + obj);
+    //console.log("removeTokenDB: " + token + " \nresult: " + obj);
 
     return {
         flag: obj != null,
@@ -247,7 +258,7 @@ async function isWhitelisted(visitorId) {
     };
     const obj = await Whitelist.findOne(filter);
 
-    console.log("Visitor: " + visitorId + " \nresult: " + obj);
+    //console.log("Visitor: " + visitorId + " \nresult: " + obj);
 
     return {
         flag: obj != null,
@@ -261,61 +272,89 @@ async function addWhitelist(visitorId) {
     }).save();
 }
 
-async function addParticipant(visitorId) {
-
-    const filter = { 
-        device: visitorId
+async function addParticipant(date, sport, visitorId){
+    var filter = { 
+        $and: [
+            { "$expr": { "$eq": [{ "$year": "$start_date" }, date.getFullYear()] } },
+            { "$expr": { "$eq": [{ "$month": "$start_date" }, date.getMonth()] } },
+            { "$expr": { "$eq": [{ "$dayOfMonth": "$start_date" }, date.getDay()] } },
+            { 'title': sport },
+            { 'participants.list': { $nin: visitorId} },
+          ]
     };
-    const person = await Person.findOne(filter);
+    var update = { $push: { 'participants.list': fullname } };
 
-    if(person == null) {
-        await new Person({
-            device: visitorId,
-        }).save();
-        const dateSweden = moment.tz(Date.now(), "Europe/Stockholm");
-        var update = { 
-            $push: { 'attendance': { "date": dateSweden } } 
-        };    
-        const result2 = await Person.updateOne(filter, update);
+    const result = await Sport.updateOne(filter, update);
 
-        return new Promise(function(resolve, reject) {
-            resolve(true);
-        });
-    }
-    //console.log("Found user: " + result);
-
-    const dateSweden = moment.tz(Date.now(), "Europe/Stockholm");
-    var check = moment(dateSweden, 'YYYY/MM/DD');
-    var month = check.format('M');
-    var day = check.format('D');
-    var year = check.format('YYYY');
-    //TOO HARD COULD NOT FIGURE OUT HOW TO QUERY ARRAY OF DATES, sorry...
-    //console.log("Month: " + month + " Day: " + day + " Year: " + year);// Today is 21 Nov 2021, output shows: Month: 11 Day: 21 Year: 2021
-    //console.log("His attendance: " + person.attendance);
-    // const filter2 = { 
-    //     $and: [
-    //         { 'device': visitorId },
-    //         { 'attendance': { "$eq": [{ "$year": "$date" }, year] } }
-    //     ]
-    // };
-    const date_list = person.attendance;
-    let flag = true;
-    date_list.forEach(d => {
-        let check1 = moment(d.date, 'YYYY/MM/DD');
-        let m = check1.format('M');
-        let dd = check1.format('D');
-        let y = check1.format('YYYY');
-
-        if(y == year && m == month && dd == day) {
-            console.log('Already signed up!');
-            flag = false;
-        }
-    });
-    console.log('Flag value: ' + flag);
-    return new Promise(function(resolve, reject) {
-        resolve(flag);
-    });
+    return {
+        flag: result != null,
+        result
+    };
 }
+
+// async function addParticipant(visitorId) {
+
+//     const filter = { 
+//         device: visitorId
+//     };
+//     const person = await Person.findOne(filter);
+
+//     if(person == null) {
+//         await new Person({
+//             device: visitorId,
+//         }).save();
+//         const dateSweden = moment.tz(Date.now(), "Europe/Stockholm");
+//         const update = { 
+//             $push: { 'attendance': { "date": dateSweden } } 
+//         };    
+//         await Person.updateOne(filter, update);
+
+//         return new Promise(function(resolve, reject) {
+//             resolve(true);
+//         });
+//     }
+//     //console.log("Found user: " + result);
+
+//     const dateSweden = moment.tz(Date.now(), "Europe/Stockholm");
+//     var check = moment(dateSweden, 'YYYY/MM/DD');
+//     var month = check.format('M');
+//     var day = check.format('D');
+//     var year = check.format('YYYY');
+//     //TOO HARD COULD NOT FIGURE OUT HOW TO QUERY ARRAY OF DATES, sorry...
+//     //console.log("Month: " + month + " Day: " + day + " Year: " + year);// Today is 21 Nov 2021, output shows: Month: 11 Day: 21 Year: 2021
+//     //console.log("His attendance: " + person.attendance);
+//     // const filter2 = { 
+//     //     $and: [
+//     //         { 'device': visitorId },
+//     //         { 'attendance': { "$eq": [{ "$year": "$date" }, year] } }
+//     //     ]
+//     // };
+//     const date_list = person.attendance;
+//     let flag = true;
+//     date_list.forEach(d => {
+//         let check1 = moment(d.date, 'YYYY/MM/DD');
+//         let m = check1.format('M');
+//         let dd = check1.format('D');
+//         let y = check1.format('YYYY');
+
+//         if(y == year && m == month && dd == day) {
+//             console.log('Already signed up!');
+//             flag = false;
+//         }
+//     });
+    
+//     if(flag) {
+//         const dateSweden = moment.tz(Date.now(), "Europe/Stockholm");
+//         const update = { 
+//             $push: { 'attendance': { "date": dateSweden } } 
+//         };    
+//         await Person.updateOne(filter, update);
+//     }
+
+//     return new Promise(function(resolve, reject) {
+//         resolve(flag);
+//     });
+// }
 
 module.exports = router;
 

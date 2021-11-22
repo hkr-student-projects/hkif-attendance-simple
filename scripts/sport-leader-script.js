@@ -5,13 +5,10 @@ const getVisitorId = async function(port) {
     const fp = await fpPromise;
     const result = await fp.get();
     const visitorId = result.visitorId;
-    console.log(visitorId);
+    //console.log(visitorId);
 
-    const node = document.querySelector('.visitorId');
-    if(node) {
-        document.querySelector('.visitorId').textContent = "Visitor ID: " + visitorId;
-        verifyUser(visitorId, port);
-    }
+    verifyUser(visitorId, port);
+    subscribe(3000, visitorId);
 };
 
 const verifyUser = function(visitorId, port) {
@@ -29,7 +26,7 @@ const verifyUser = function(visitorId, port) {
             anHttpRequest.open("POST", aUrl, true);  
             anHttpRequest.setRequestHeader("Content-Type", "application/json;charset=UTF-8"); 
             anHttpRequest.send(JSON.stringify(json));
-            console.log("sent: " + JSON.stringify(json));
+            //console.log("sent: " + JSON.stringify(json));
         };
     };
     
@@ -37,7 +34,7 @@ const verifyUser = function(visitorId, port) {
     var client = new HttpClient();
         client.post(`http://192.168.1.195:${port}/verify`, 
         function(response) {
-            console.log("response: " + response);
+            //console.log("response: " + response);
             const res = JSON.parse(response);
             document.getElementById("qr-code").src=`${res.qr_image}`;
         }, 
@@ -45,15 +42,10 @@ const verifyUser = function(visitorId, port) {
             "visitorId": visitorId
         }
     );
-
-
-    // return new Promise((resolve, reject) => {
-    //     resolve({'country' : 'INDIA'});
-    // });
 };
 
-const subscribe = function(port) {
-    const es = new EventSource(`http://192.168.1.195:${port}/stream`);
+const subscribe = function(port, vid) {
+    const es = new EventSource(`http://192.168.1.195:${port}/stream/${vid}`);
     es.addEventListener('event-updated-qr-code', ev => {
         //alert(ev.data);
         document.getElementById("qr-code").src=`${ev.data}`;
@@ -61,4 +53,3 @@ const subscribe = function(port) {
 };
 
 getVisitorId(3000);
-subscribe(3000);
