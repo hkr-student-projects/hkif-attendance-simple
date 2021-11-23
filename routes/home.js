@@ -19,7 +19,9 @@ router.get('/', async (req, res) => {
     if(!sportInfo.flag) {
         res
             .status(400)
-            .send(sportInfo.message);
+            res.render('closed', {
+                info: JSON.stringify(timetable.getToday())
+            }); 
 
         return;
     }
@@ -206,11 +208,11 @@ router.post('/register/enroll', async (req, res) => {
     const result = await addParticipant(sportInfo.dayInfo.date, sportInfo.dayInfo.sport, visitorId);
     if(result.flag) {
         console.log("Participant is enrolled, ID: " + visitorId);
-        res.status(200).send("You have been added to the sport event! Your ID: " + visitorId); 
+        res.status(200).send("You have been added to " + sportInfo.sport); 
     }
     else {
         console.log("Participant tried to sign up again!");
-        res.status(404).send("[Error]: You are already enrolled for this sport! Your ID: " + visitorId); 
+        res.status(404).send("[Error]: You are already enrolled for " + sportInfo.sport); 
     }
 });
 

@@ -6,8 +6,22 @@ const timetable = {
             } 
         });
     },
+    getToday: function() {
+
+        const d = new Date();
+        const weekday = new Array(7);
+        weekday[0] = "sunday";
+        weekday[1] = "monday";
+        weekday[2] = "tuesday";
+        weekday[3] = "wednesday";
+        weekday[4] = "thursday";
+        weekday[5] = "friday";
+        weekday[6] = "saturday";
+
+        return this.getDay(weekday[d.getDay()]);
+    },
     getSportNow: function() {
-        const d = new Date("November 22, 2021 18:15:00");
+        const d = new Date();//"November 26, 2021 18:15:00"
 
         if(d.getDay() == 6) {
             return {
