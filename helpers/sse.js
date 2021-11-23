@@ -32,7 +32,7 @@ module.exports = class SSEChannel {
 		// 	throw new Error('Channel closed'); 
 		// }
 		let output;
-		let id;
+		//let id;
 		if (!data && !eventName) {
 			if (!this.clients.size) {
 				return;

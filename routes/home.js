@@ -203,18 +203,15 @@ router.post('/register/enroll', async (req, res) => {
     await removeTokenDB(token);
     await updateLeaderQR(issuer);
     await existsDay(sportInfo.dayInfo.date, sportInfo.dayInfo.weekday);
-    await addParticipant(sportInfo.dayInfo.date, sportInfo.dayInfo.sport, visitorId).then((result) => {
-        if(result) {
-            console.log("Participant is enrolled, ID: " + visitorId);
-            res.status(200).send("You have been added to the sport event! Your ID: " + visitorId); 
-        }
-        else {
-            console.log("Participant tried to sign up again!");
-            res.status(404).send("[Error]: You are already enrolled for this sport! Your ID: " + visitorId); 
-        }
-    }).catch((err) => {
-        console.log(err);
-    });
+    const result = await addParticipant(sportInfo.dayInfo.date, sportInfo.dayInfo.sport, visitorId);
+    if(result.flag) {
+        console.log("Participant is enrolled, ID: " + visitorId);
+        res.status(200).send("You have been added to the sport event! Your ID: " + visitorId); 
+    }
+    else {
+        console.log("Participant tried to sign up again!");
+        res.status(404).send("[Error]: You are already enrolled for this sport! Your ID: " + visitorId); 
+    }
 });
 
 
@@ -300,7 +297,6 @@ async function isWhitelisted(visitorId) {
     };
 }
 
-
 async function getIssuer(token) {
     var filter = { 
         value: token
@@ -343,36 +339,36 @@ async function existsDay(date, weekday) {
 async function addParticipant(date, sport, visitorId) {
     const isAlreadyFilter = { 
         $and: [
-            { "$expr": { "$eq": [{ "$year": "$start_date" }, date.getFullYear()] } },
-            { "$expr": { "$eq": [{ "$month": "$start_date" }, date.getMonth() + 1] } },
-            { "$expr": { "$eq": [{ "$dayOfMonth": "$start_date" }, date.getDate()] } },
-            { 'participants.list': { $in: { 'sport': sport, 'visitorId': visitorId } } }
+            { "$expr": { "$eq": [{ "$year": "$date" }, date.getFullYear()] } },
+            { "$expr": { "$eq": [{ "$month": "$date" }, date.getMonth() + 1] } },
+            { "$expr": { "$eq": [{ "$dayOfMonth": "$date" }, date.getDate()] } },
+            { 'participants.list': { "$elemMatch": { 'sport': sport, 'visitorId': visitorId } } }
           ]
     };
 
     const result1 = await SportDay.findOne(isAlreadyFilter);
+    //console.log('isAlreadyFilter: ' + JSON.stringify(result1));
     if(result1 != null) {
-        console.log('NOT INSIDE SYSTEM');
         return {
             flag: false,
-            message: `ERROR: You are already signed up for: ${sport}.`
+            message: `Error: You are already signed up for: ${sport}.`
         };
     }
 
     const dayFilter = { 
         $and: [
-            { "$expr": { "$eq": [{ "$year": "$start_date" }, date.getFullYear()] } },
-            { "$expr": { "$eq": [{ "$month": "$start_date" }, date.getMonth() + 1] } },
-            { "$expr": { "$eq": [{ "$dayOfMonth": "$start_date" }, date.getDate()] } }
+            { "$expr": { "$eq": [{ "$year": "$date" }, date.getFullYear()] } },
+            { "$expr": { "$eq": [{ "$month": "$date" }, date.getMonth() + 1] } },
+            { "$expr": { "$eq": [{ "$dayOfMonth": "$date" }, date.getDate()] } }
           ]
     };
     const pushPersonUpdate = {
         $push: { 'participants.list': { 'sport': sport, 'visitorId': visitorId } }
     };
 
-    await SportDay.updateOne(dayFilter, pushPersonUpdate);
+    const res = await SportDay.updateOne(dayFilter, pushPersonUpdate);
 
-    console.log('pushed INSIDE SYSTEM');
+    //console.log('pushed INSIDE THE SYSTEM: ' + JSON.stringify(res));
 
     return {
         flag: true,

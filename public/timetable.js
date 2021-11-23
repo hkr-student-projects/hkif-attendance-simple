@@ -7,7 +7,7 @@ const timetable = {
         });
     },
     getSportNow: function() {
-        const d = new Date("November 22, 2021 16:15:00");
+        const d = new Date("November 22, 2021 18:15:00");
 
         if(d.getDay() == 6) {
             return {

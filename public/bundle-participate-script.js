@@ -2927,6 +2927,7 @@ const enroll = function(visitorId, port) {
         client.post(`http://192.168.1.195:${port}/register/enroll`, 
         function(response) {
             console.log("response: " + response);
+            document.write(response);
         }, 
         { 
             "visitorId": visitorId,
