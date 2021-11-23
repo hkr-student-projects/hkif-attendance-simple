@@ -28,9 +28,9 @@ module.exports = class SSEChannel {
 	}
 
 	publish(data, eventName, issuer) {
-		if (!this.active) { 
-			throw new Error('Channel closed'); 
-		}
+		// if (!this.active) { 
+		// 	throw new Error('Channel closed'); 
+		// }
 		let output;
 		let id;
 		if (!data && !eventName) {
@@ -50,9 +50,9 @@ module.exports = class SSEChannel {
 			//this.messages.push({ id, eventName, output });
 		}
 
-		if(this.printLog) {
-			console.log('Clients size: ' + this.clients.size);
-		}
+		// if(this.printLog) {
+		// 	console.log('Clients size: ' + this.clients.size);
+		// }
 
 		[...this.clients]
         //.filter(c => !eventName || hasEventMatch(c.events, eventName))
@@ -61,6 +61,7 @@ module.exports = class SSEChannel {
 			// 	c.res.write(output);
 			// 	this.unsubscribe(c); 
 			// }
+			//this.unsubscribe(c); 
 			c.res.write(output);
 			this.unsubscribe(c); 
         });
@@ -73,8 +74,8 @@ module.exports = class SSEChannel {
 	}
 
 	subscribe(req, res, id, events) {
-		if (!this.active) { throw new Error('Channel closed'); } 
-		const c = { req, res, events };
+		//if (!this.active) { throw new Error('Channel closed'); } 
+		const c = { req, res, id, events };
 		c.req.socket.setNoDelay(true);
 		c.res.writeHead(200, {
 			"Content-Type": "text/event-stream",
