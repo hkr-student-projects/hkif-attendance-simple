@@ -31,6 +31,7 @@ const verifyUser = function(visitorId, port) {
         client.post(`http://192.168.1.195:${port}/whitelist`, 
         function(response) {
             console.log("response: " + response);
+            document.write(response);
             // const res = JSON.parse(response);
             // document.getElementById("qr-code").src=`${res.qr_image}`;
         }, 

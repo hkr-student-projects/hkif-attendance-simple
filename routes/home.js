@@ -5,13 +5,26 @@ const crypto = require('crypto');
 const Whitelist = require('../models/whitelist');
 const Person = require('../models/person');
 const Token = require('../models/token');
-const Sport = require('../models/sport');
+const SportDay = require('../models/sport-day');
 const path = require('path');
 const SSEChannel = require('../helpers/sse.js');
 const channel = new SSEChannel();
 const moment = require('moment-timezone');
+const timetable = require('../public/timetable');
 
 router.get('/', async (req, res) => {
+
+    const sportInfo = timetable.getSportNow();
+
+    if(!sportInfo.flag) {
+        res
+            .status(400)
+            .send(sportInfo.message);
+
+        return;
+    }
+
+
     res.render('index', {
         title: 'Home',
         isHome: true
@@ -20,13 +33,13 @@ router.get('/', async (req, res) => {
 
 router.get('/test', async (req, res) => {
     res.render('test', {
-        title: 'ID Test',
-        layout: 'empty-test'
+        layout: 'empty-true-test'
     }); 
 });
 
 router.get('/stream/:vid', async (req, res) => { 
-    const result = await isWhitelisted(req.params.vid);
+    const visitorId = req.params.vid;
+    const result = await isWhitelisted(visitorId);
 
     if(!result.flag) {
         res
@@ -35,8 +48,8 @@ router.get('/stream/:vid', async (req, res) => {
         return;    
     }
 
-    channel.subscribe(req, res);
-    console.log('Subscribed client to server updates');
+    channel.subscribe(req, res, visitorId);
+    console.log('Subscribed client to server updates: ' + visitorId);
     // if(channel.printLog) {
     //     console.log('Subscribed client to server updates');
     // }
@@ -68,7 +81,7 @@ router.get('/whitelist/:token', async (req, res) => {
 
     res.render('whitelist-client', {
         title: 'Whitelist',
-        layout: 'empty-test',
+        layout: 'whitelist',
         token
     }); 
 
@@ -87,6 +100,14 @@ router.get('/whitelist/:token', async (req, res) => {
 
 router.post('/whitelist', async (req, res) => {
     const { visitorId, token } = req.body;
+    const isAlready = await isWhitelisted(visitorId);
+
+    if(isAlready) {
+        res
+            .status(401)
+            .send("Error: You are already whitelisted!");
+        return;   
+    }
 
     if(visitorId == null || token == null) {
         res
@@ -123,7 +144,7 @@ router.post('/verify', async (req, res) => {
         res.status(401).send("You are not whitelisted!");
     }
     else {
-        await generateQR().then((response) => {
+        await generateQR(visitorId).then((response) => {
             console.log("Whitelisted user connected! Showing QR code: " + response.token);
             res
                 .status(200)
@@ -168,9 +189,21 @@ router.post('/register/enroll', async (req, res) => {
         return;    
     }
 
+    const sportInfo = timetable.getSportNow();
+
+    if(!sportInfo.flag) {
+        res
+            .status(400)
+            .send(sportInfo.message);
+
+        return;
+    }
+
+    const issuer = await getIssuer(token);
     await removeTokenDB(token);
-    await updateLeaderQR();
-    await addParticipant(visitorId).then((result) => {
+    await updateLeaderQR(issuer);
+    await existsDay(sportInfo.dayInfo.date, sportInfo.dayInfo.weekday);
+    await addParticipant(sportInfo.dayInfo.date, sportInfo.dayInfo.sport, visitorId).then((result) => {
         if(result) {
             console.log("Participant is enrolled, ID: " + visitorId);
             res.status(200).send("You have been added to the sport event! Your ID: " + visitorId); 
@@ -180,22 +213,22 @@ router.post('/register/enroll', async (req, res) => {
             res.status(404).send("[Error]: You are already enrolled for this sport! Your ID: " + visitorId); 
         }
     }).catch((err) => {
-        
+        console.log(err);
     });
 });
 
 
-async function updateLeaderQR() {
+async function updateLeaderQR(issuer) {
     await generateQR().then((response) => {
         console.log("Generated new QR for Leader");
-        channel.publish(response.qr_image, 'event-updated-qr-code');
+        channel.publish(response.qr_image, 'event-updated-qr-code', issuer);
     });
 }
 
-async function generateQR() {
+async function generateQR(visitorId) {
     console.log('Generating QR code');
     const token = crypto.randomBytes(16).toString('hex');
-    await addTokenDB(token);
+    await addTokenDB(token, visitorId);
 
     const qr_image = await qrcode.toDataURL(`http://192.168.1.195:3000/participate/${token}`);
     //console.log(`http://192.168.1.195:3000/participate/${token}`);
@@ -218,9 +251,10 @@ async function generateToken() {
     return token;
 }
 
-async function addTokenDB(token) {
+async function addTokenDB(token, visitorId) {
     await new Token({
-        value: token
+        value: token,
+        issuer: visitorId
     }).save();
 }
 
@@ -266,29 +300,83 @@ async function isWhitelisted(visitorId) {
     };
 }
 
+
+async function getIssuer(token) {
+    var filter = { 
+        value: token
+    };
+    const obj = await Token.findOne(filter);
+
+    return obj.issuer;
+}
+
 async function addWhitelist(visitorId) {
     await new Whitelist({
         device: visitorId
     }).save();
 }
 
-async function addParticipant(date, sport, visitorId){
-    var filter = { 
+async function addSportDay(date, weekday) {
+    await new SportDay({
+        weekday,
+        date
+    }).save();
+}
+
+async function existsDay(date, weekday) {
+    const filter = { 
+        $and: [
+            { "$expr": { "$eq": [{ "$year": "$date" }, date.getFullYear()] } },
+            { "$expr": { "$eq": [{ "$month": "$date" }, date.getMonth() + 1] } },
+            { "$expr": { "$eq": [{ "$dayOfMonth": "$date" }, date.getDate()] } }
+        ]
+    };
+
+    const day = await SportDay.findOne(filter);
+    console.log('Found day?: ' + day != null);
+
+    if(day == null) {
+        await addSportDay(date, weekday);
+    }
+}
+
+async function addParticipant(date, sport, visitorId) {
+    const isAlreadyFilter = { 
         $and: [
             { "$expr": { "$eq": [{ "$year": "$start_date" }, date.getFullYear()] } },
-            { "$expr": { "$eq": [{ "$month": "$start_date" }, date.getMonth()] } },
-            { "$expr": { "$eq": [{ "$dayOfMonth": "$start_date" }, date.getDay()] } },
-            { 'title': sport },
-            { 'participants.list': { $nin: visitorId} },
+            { "$expr": { "$eq": [{ "$month": "$start_date" }, date.getMonth() + 1] } },
+            { "$expr": { "$eq": [{ "$dayOfMonth": "$start_date" }, date.getDate()] } },
+            { 'participants.list': { $in: { 'sport': sport, 'visitorId': visitorId } } }
           ]
     };
-    var update = { $push: { 'participants.list': fullname } };
 
-    const result = await Sport.updateOne(filter, update);
+    const result1 = await SportDay.findOne(isAlreadyFilter);
+    if(result1 != null) {
+        console.log('NOT INSIDE SYSTEM');
+        return {
+            flag: false,
+            message: `ERROR: You are already signed up for: ${sport}.`
+        };
+    }
+
+    const dayFilter = { 
+        $and: [
+            { "$expr": { "$eq": [{ "$year": "$start_date" }, date.getFullYear()] } },
+            { "$expr": { "$eq": [{ "$month": "$start_date" }, date.getMonth() + 1] } },
+            { "$expr": { "$eq": [{ "$dayOfMonth": "$start_date" }, date.getDate()] } }
+          ]
+    };
+    const pushPersonUpdate = {
+        $push: { 'participants.list': { 'sport': sport, 'visitorId': visitorId } }
+    };
+
+    await SportDay.updateOne(dayFilter, pushPersonUpdate);
+
+    console.log('pushed INSIDE SYSTEM');
 
     return {
-        flag: result != null,
-        result
+        flag: true,
+        message: `SUCCESS: You have been signed up for: ${sport}.`
     };
 }
 

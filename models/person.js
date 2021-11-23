@@ -2,9 +2,13 @@ const { default: strictTransportSecurity } = require('helmet/dist/middlewares/st
 const { Schema, model } = require('mongoose');
 
 const person = new Schema({
-    device: {
-        type: String,
-        required: true  
+    devices: {
+        list: [
+            {
+                type: String,
+                required: false 
+            }
+        ] 
     },
     firstname: {
         type: String,
@@ -18,6 +22,10 @@ const person = new Schema({
         type: String,
         required: false
     },
+    has_paid: {
+        type: Boolean,
+        requried: false
+    },
     emails: [
         {
             type: String,
@@ -28,32 +36,6 @@ const person = new Schema({
         {
             type: String,
             required: false
-        }
-    ],
-    memberships: [
-        {
-            period: {
-                start: {
-                    type: Date,
-                    required: false
-                },
-                end: {
-                    type: Date,
-                    required: false
-                }
-            },
-            has_paid: {
-                type: Boolean,
-                required: false
-            }
-        }
-    ],
-    attendance: [
-        {
-            date: {
-                type: Date,
-                required: false
-            }
         }
     ]
 }, {

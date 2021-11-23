@@ -7,7 +7,7 @@ const timetable = {
         });
     },
     getSportNow: function() {
-        const d = new Date();
+        const d = new Date("November 22, 2021 16:15:00");
 
         if(d.getDay() == 6) {
             return {
@@ -15,6 +15,8 @@ const timetable = {
                 message: 'No sports on Saturday'
             };
         }
+
+        let dayObj = {};
 
         const weekday = new Array(7);
         weekday[0] = "sunday";
@@ -28,6 +30,8 @@ const timetable = {
         const dayNow = weekday[d.getDay()];
         const hourNow = d.getHours();
         const minuteNow = d.getMinutes();
+
+        //console.log('REs: ' + d.getDate());
         
         const foundDay = this.days.find(function(day, index) {
             if(day.name == dayNow) {
@@ -45,16 +49,21 @@ const timetable = {
             //console.log('NO sports now');
             return {
                 flag: false,
-                message: 'No sport is going now.'
+                message: 'No sport is taking place now. We are closed.'
             };
         }
 
         //console.log('Title: ' + sportFound.title);
 
+        dayObj.weekday = dayNow;
+        dayObj.sport = sportFound.title;
+        dayObj.date = d;
+
         return {
             flag: true,
             sport: sportFound.title,
-            message: `The ${sportFound.title} is taking place now.`
+            message: `The ${sportFound.title} is taking place now.`,
+            dayInfo: dayObj
         };
     },
     days: [

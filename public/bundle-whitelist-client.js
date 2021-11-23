@@ -2885,9 +2885,9 @@ function __classPrivateFieldSet(receiver, state, value, kind, f) {
 var __webpack_exports__ = {};
 // This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
 (() => {
-/*!***************************************!*\
-  !*** ./scripts/test-get-unique-id.js ***!
-  \***************************************/
+/*!*************************************!*\
+  !*** ./scripts/whitelist-client.js ***!
+  \*************************************/
 const FingerprintJS = __webpack_require__(/*! ../../../../../node_modules/@fingerprintjs/fingerprintjs */ "./node_modules/@fingerprintjs/fingerprintjs/dist/fp.esm.js");
 
 const getVisitorId = async function() {
@@ -2921,6 +2921,7 @@ const verifyUser = function(visitorId, port) {
         client.post(`http://192.168.1.195:${port}/whitelist`, 
         function(response) {
             console.log("response: " + response);
+            document.write(response);
             // const res = JSON.parse(response);
             // document.getElementById("qr-code").src=`${res.qr_image}`;
         }, 
@@ -2945,4 +2946,4 @@ getVisitorId();
 
 /******/ })()
 ;
-//# sourceMappingURL=bundle-test-get-unique-id.js.map
+//# sourceMappingURL=bundle-whitelist-client.js.map

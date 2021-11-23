@@ -6,12 +6,14 @@ const whitelisted = new Schema({
         type: String,
         required: true
     },
-    sports: [
-        {
-            type: String,
-            required: false
-        }
-    ]
+    sports: {
+        list: [
+            {
+                type: String,
+                required: false
+            }
+        ]
+    }
 }, {
     timestamps: true
 });

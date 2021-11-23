@@ -18,16 +18,16 @@ module.exports = class SSEChannel {
 
 		this.nextID = this.options.startId;
 		this.clients = new Set();
-		this.messages = [];
+		//this.messages = [];
 		this.active = true;
 		this.printLog = this.options.printLog;
 
-		if (this.options.pingInterval) {
-			this.pingTimer = setInterval(() => this.publish(), this.options.pingInterval);
-		}
+		// if (this.options.pingInterval) {
+		// 	this.pingTimer = setInterval(() => this.publish(), this.options.pingInterval);
+		// }
 	}
 
-	publish(data, eventName) {
+	publish(data, eventName, issuer) {
 		if (!this.active) { 
 			throw new Error('Channel closed'); 
 		}
@@ -39,15 +39,15 @@ module.exports = class SSEChannel {
 			} // No need to create a ping entry if there are no clients connected
 			output = "data: \n\n";
 		} else {
-			id = this.nextID++;
+			//id = this.nextID++;
 			//if (typeof data === "object") data = JSON.stringify(data);
 			data = data ? data.split(/[\r\n]+/).map(str => 'data: '+str).join('\n') : '';
 			output = (
-				"id: " + id + "\n" +
+				//"id: " + id + "\n" +
 				(eventName ? "event: " + eventName + "\n" : "") +
 				(data || "data: ") + '\n\n'
 			);
-			this.messages.push({ id, eventName, output });
+			//this.messages.push({ id, eventName, output });
 		}
 
 		if(this.printLog) {
@@ -57,43 +57,47 @@ module.exports = class SSEChannel {
 		[...this.clients]
         //.filter(c => !eventName || hasEventMatch(c.events, eventName))
         .forEach(c => { 
-            c.res.write(output);
-            this.unsubscribe(c); 
+			// if(c.id == issuer) {
+			// 	c.res.write(output);
+			// 	this.unsubscribe(c); 
+			// }
+			c.res.write(output);
+			this.unsubscribe(c); 
         });
 
-		while (this.messages.length > this.options.historySize) {
-			this.messages.shift();
-		}
+		// while (this.messages.length > this.options.historySize) {
+		// 	this.messages.shift();
+		// }
 
-		return id;
+		// return id;
 	}
 
-	subscribe(req, res, events) {
-		//if (!this.active) { throw new Error('Channel closed'); } 
+	subscribe(req, res, id, events) {
+		if (!this.active) { throw new Error('Channel closed'); } 
 		const c = { req, res, events };
 		c.req.socket.setNoDelay(true);
-		// c.res.writeHead(200, {
-		// 	"Content-Type": "text/event-stream",
-		// 	"Cache-Control": "s-maxage="+(Math.floor(this.options.maxStreamDuration/1000)-1)+"; max-age=0; stale-while-revalidate=0; stale-if-error=0",
-		// 	"Connection": "keep-alive"
-		// });
-        c.res.writeHead(200, {
-			'Connection': 'keep-alive',
-            'Content-Type': 'text/event-stream',
-            'Cache-Control': 'no-cache',
-            'X-Accel-Buffering': 'no',
-            'Access-Control-Allow-Origin': '*',
+		c.res.writeHead(200, {
+			"Content-Type": "text/event-stream",
+			"Cache-Control": "s-maxage="+(Math.floor(this.options.maxStreamDuration/1000)-1)+"; max-age=0; stale-while-revalidate=0; stale-if-error=0",
+			"Connection": "keep-alive"
 		});
+        // c.res.writeHead(200, {
+		// 	'Connection': 'keep-alive',
+        //     'Content-Type': 'text/event-stream',
+        //     'Cache-Control': 'no-cache',
+        //     'X-Accel-Buffering': 'no',
+        //     'Access-Control-Allow-Origin': '*',
+		// });
         
 		let body = "retry: " + this.options.clientRetryInterval + '\n\n';
 
-		const lastID = Number.parseInt(req.headers['last-event-id'], 10);
-		const rewind = (!Number.isNaN(lastID)) ? ((this.nextID - 1) - lastID) : this.options.rewind;
-		if (rewind) {
-			this.messages.filter(m => hasEventMatch(c.events, m.eventName)).slice(0-rewind).forEach(m => {
-				body += m.output;
-			});
-		}
+		// const lastID = Number.parseInt(req.headers['last-event-id'], 10);
+		// const rewind = (!Number.isNaN(lastID)) ? ((this.nextID - 1) - lastID) : this.options.rewind;
+		// if (rewind) {
+		// 	this.messages.filter(m => hasEventMatch(c.events, m.eventName)).slice(0-rewind).forEach(m => {
+		// 		body += m.output;
+		// 	});
+		// }
 
 		c.res.write(body);
 		this.clients.add(c);
@@ -106,10 +110,10 @@ module.exports = class SSEChannel {
 		// }, this.options.maxStreamDuration);
 		// c.res.on('close', () => { 
 		// 	console.log('CLOSED!');
-		// 	//this.unsubscribe(c);
+		// 	this.unsubscribe(c);
 		// });
 
-		return c;
+		// return c;
 	}
 
 	unsubscribe(c) {

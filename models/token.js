@@ -6,7 +6,11 @@ const token = new Schema({
         type: String,
         required: true
     },
-    sport: {
+    expiration: {
+        type: Date,
+        required: false
+    },
+    issuer: {
         type: String,
         required: false
     }
