@@ -7,21 +7,18 @@ const getVisitorId = async function() {
     const visitorId = result.visitorId;
     console.log(visitorId);
 
-    document.querySelector('.visitorId').textContent = "Visitor ID: " + visitorId;
-    enroll(visitorId, 3000);
-
-    return visitorId;
+    verifyUser(visitorId, 3000);
 };
 
-const enroll = async function(visitorId, port) {
+const verifyUser = function(visitorId, port) {
+    const token = getToken();
+
     var HttpClient = function() {
-        this.get = function(aUrl, aCallback, json) {
+        this.post = function(aUrl, aCallback, json) {
             const anHttpRequest = new XMLHttpRequest();
-            anHttpRequest.onreadystatechange = function() { 
-                if (anHttpRequest.readyState == 4 && anHttpRequest.status == 200) {
-                    aCallback(anHttpRequest.responseText);
-                } 
-            };
+            anHttpRequest.addEventListener('load', function() {
+                aCallback(anHttpRequest.responseText);
+            });
             anHttpRequest.open("POST", aUrl, true);  
             anHttpRequest.setRequestHeader("Content-Type", "application/json;charset=UTF-8"); 
             anHttpRequest.send(JSON.stringify(json));
@@ -31,12 +28,16 @@ const enroll = async function(visitorId, port) {
     
 
     var client = new HttpClient();
-        client.get(`http://192.168.1.195:${port}/participate/enroll`, 
+        client.post(`http://192.168.1.195:${port}/whitelist`, 
         function(response) {
             console.log("response: " + response);
+            document.write(response);
+            // const res = JSON.parse(response);
+            // document.getElementById("qr-code").src=`${res.qr_image}`;
         }, 
         { 
-            visitorId 
+            "visitorId": visitorId,
+            "token": token
         }
     );
 
@@ -44,6 +45,10 @@ const enroll = async function(visitorId, port) {
     // return new Promise((resolve, reject) => {
     //     resolve({'country' : 'INDIA'});
     // });
+};
+
+const getToken = function() {
+    return document.getElementById('super-secret-token').value;
 };
 
 getVisitorId();
